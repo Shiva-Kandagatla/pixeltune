@@ -1,5 +1,5 @@
-export const MAX_ATTEMPTS = 3;
 
+export const MAX_ATTEMPTS = 3;
 export const generateSequence = (difficulty) => {
   const sequenceLength = difficulty === 'normal' ? 5 : 7;
   const gridSize = difficulty === 'normal' ? 9 : 16;

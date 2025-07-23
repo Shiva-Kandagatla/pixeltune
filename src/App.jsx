@@ -14,14 +14,14 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(null);
   const [tileStatus, setTileStatus] = useState({}); // New state for tile feedback
-  const [replaysLeft, setReplaysLeft] = useState(3); // Replay counter
+  const [replaysLeft, setReplaysLeft] = useState(null); // Replay counter
   const [difficulty, setDifficulty] = useState(null);
   const [sequence, setSequence] = useState([]);
-  const [showNumbers, setShowNumbers] = useState(false);
 
   const handleStartGame = async (selectedDifficulty) => {
   await Tone.start();
   setDifficulty(selectedDifficulty);
+  setReplaysLeft(selectedDifficulty == 'normal' ? 3 : 1)
   const newSequence = generateSequence(selectedDifficulty);
   setSequence(newSequence);
   setGameStarted(true);
@@ -57,8 +57,7 @@ const playSequence = async (sequenceToPlay, difficultyToPlay, isReplay = false) 
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   setIsPlaying(false);
-  // Add feedback after playback
-  setFeedback(`Sequence played. Difficulty: ${difficultyToPlay}`);
+  setFeedback(`Your turn. Try recreating the sequence...`);
 };
 
 const handleTileClick = (tileIndex) => {
@@ -67,7 +66,6 @@ const handleTileClick = (tileIndex) => {
   const currentStep = userSequence.length;
   const isCorrect = sequence[currentStep] === tileIndex;
 
-  // Add note playback with error handling
   try {
     playNote(tileIndex, difficulty);
   } catch (error) {
@@ -89,13 +87,10 @@ const handleTileClick = (tileIndex) => {
     setAttempts(attempts + 1);
     setUserSequence([]); // Reset sequence
     if (attempts + 1 >= MAX_ATTEMPTS) {
+      sequence.map((val, index)=>{sequence[index] = val+1})
       setFeedback(`❌ Game over! The sequence was: ${sequence.join(', ')}`);
     } else {
       setFeedback(`❌ Incorrect. Try again! (${attempts + 1}/${MAX_ATTEMPTS})`);
-      setIsPlaying(true);
-      setTimeout(() => {
-        playSequence(sequence, difficulty);
-      }, 1000);
     }
   }
 };
@@ -127,19 +122,18 @@ const handleTileClick = (tileIndex) => {
         </div>
       ) : (
         <>
-          <TileGrid onTileClick={handleTileClick} currentlyPlayingIndex={currentlyPlayingIndex} tileStatus={tileStatus} difficulty={difficulty} showNumbers={showNumbers} />
+          <TileGrid onTileClick={handleTileClick} currentlyPlayingIndex={currentlyPlayingIndex} tileStatus={tileStatus} difficulty={difficulty} />
           <div className="feedback">{feedback}</div>
           {attempts >= MAX_ATTEMPTS && (
             <button onClick={handleShare}>Share Result</button>
           )}
-          <button onClick={() => playSequence(sequence, difficulty, true)} disabled={isPlaying || replaysLeft === 0}>
+          {
+            attempts < MAX_ATTEMPTS && (
+              <button onClick={() => playSequence(sequence, difficulty, true)} disabled={isPlaying || replaysLeft === 0}>
             Replay Sequence ({replaysLeft} left)
           </button>
-          {attempts >= MAX_ATTEMPTS && (
-            <button onClick={() => setShowNumbers(!showNumbers)}>
-              {showNumbers ? 'Hide Numbers' : 'Show Numbers'}
-            </button>
-          )}
+            )
+          }
         </>
       )}
     </div>
